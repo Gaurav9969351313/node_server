@@ -1,0 +1,185 @@
+npm install express-generator -g 
+
+npm install cors --save
+npm install mysql --save
+
+npm install
+
+CREATE TABLE IF NOT EXISTS `task` (`Id`  
+    varchar(50) NOT NULL, `Title`  
+    varchar(500) DEFAULT NULL, `Status`  
+    varchar(100) DEFAULT NULL, PRIMARY KEY(`Id`)) ENGINE = InnoDB DEFAULT CHARSET = latin1;  
+
+ 
+    INSERT INTO `task` (`Id`, `Title`, `Status`) VALUES('1', 'Go to Market tomorrow', 'done'), ('2', 'Email to manager', 'pending'), ('3', 'Push code to GitHub', 'done'), ('4', 'Go For Running', 'done'), ('5', 'Go to Movie', 'pending');  
+------------------------------------------------------------------
+
+dbconnection.js
+
+var mysql = require('mysql');  
+var connection = mysql.createPool({  
+    host: 'localhost',  
+    user: 'root',  
+    password: '',  
+    database: 'demoapi'  
+});  
+module.exports = connection;  
+
+---------------------------------------------------------------------------
+
+routes/Tasks.js
+
+var express = require('express');  
+var router = express.Router();  
+var Task = require('../models/Task');  
+router.get('/:id?', function(req, res, next) {  
+    if (req.params.id) {  
+        Task.getTaskById(req.params.id, function(err, rows) {  
+            if (err) {  
+                res.json(err);  
+            } else {  
+                res.json(rows);  
+            }  
+        });  
+    } else {  
+        Task.getAllTasks(function(err, rows) {  
+            if (err) {  
+                res.json(err);  
+            } else {  
+                res.json(rows);  
+            }  
+        });  
+    }  
+});  
+router.post('/', function(req, res, next) {  
+    Task.addTask(req.body, function(err, count) {  
+        if (err) {  
+            res.json(err);  
+        } else {  
+            res.json(req.body); //or return count for 1 & 0  
+        }  
+    });  
+});  
+router.delete('/:id', function(req, res, next) {  
+    Task.deleteTask(req.params.id, function(err, count) {  
+        if (err) {  
+            res.json(err);  
+        } else {  
+            res.json(count);  
+        }  
+    });  
+});  
+router.put('/:id', function(req, res, next) {  
+    Task.updateTask(req.params.id, req.body, function(err, rows) {  
+        if (err) {  
+            res.json(err);  
+        } else {  
+            res.json(rows);  
+        }  
+    });  
+});  
+module.exports = router; 
+
+------------------------------------------------------------------
+Models/Task.js
+
+var db = require('../dbconnection'); //reference of dbconnection.js  
+var Task = {  
+    getAllTasks: function(callback) {  
+        return db.query("Select * from task", callback);  
+    },  
+    getTaskById: function(id, callback) {  
+        return db.query("select * from task where Id=?", [id], callback);  
+    },  
+    addTask: function(Task, callback) {  
+        return db.query("Insert into task values(?,?,?)", [Task.Id, Task.Title, Task.Status], callback);  
+    },  
+    deleteTask: function(id, callback) {  
+        return db.query("delete from task where Id=?", [id], callback);  
+    },  
+    updateTask: function(id, Task, callback) {  
+        return db.query("update task set Title=?,Status=? where Id=?", [Task.Title, Task.Status, id], callback);  
+    }  
+};  
+module.exports = Task;  
+
+
+--------------------------------------------------
+app.js
+
+var express = require('express');  
+var path = require('path');  
+var favicon = require('serve-favicon');  
+var logger = require('morgan');  
+var cookieParser = require('cookie-parser');  
+var bodyParser = require('body-parser');  
+var cors = require('cors');  
+var routes = require('./routes/index');  
+var users = require('./routes/users');  
+var Tasks = require('./routes/Tasks');  
+var app = express();  
+// view engine setup  
+app.set('views', path.join(__dirname, 'views'));  
+app.set('view engine', 'jade');  
+// uncomment after placing your favicon in /public  
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));  
+app.use(cors());  
+app.use(logger('dev'));  
+app.use(bodyParser.json());  
+app.use(bodyParser.urlencoded({  
+    extended: false  
+}));  
+app.use(cookieParser());  
+app.use(express.static(path.join(__dirname, 'public')));  
+app.use('/', routes);  
+app.use('/users', users);  
+app.use('/Tasks', Tasks);  
+// catch 404 and forward to error handler  
+app.use(function(req, res, next) {  
+    var err = new Error('Not Found');  
+    err.status = 404;  
+    next(err);  
+});  
+// error handlers  
+// development error handler  
+// will print stacktrace  
+if (app.get('env') === 'development') {  
+    app.use(function(err, req, res, next) {  
+        res.status(err.status || 500);  
+        res.render('error', {  
+            message: err.message,  
+            error: err  
+        });  
+    });  
+}  
+// production error handler  
+// no stacktraces leaked to user  
+app.use(function(err, req, res, next) {  
+    res.status(err.status || 500);  
+    res.render('error', {  
+        message: err.message,  
+        error: {}  
+    });  
+});  
+module.exports = app; 
+
+
+
+---------------------------------------------------
+
+npm start
+
+
+Steps:- testing
+
+http://localhost:3000/Tasks	GET
+http://localhost:3000/Tasks/1	GET
+http://localhost:3000/Tasks/1	DELETE
+http://localhost:3000/Tasks	POST (pass data in body)
+http://localhost:3000/Tasks/1	PUT (pass data in body)
+
+
+
+
+
+
