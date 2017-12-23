@@ -179,6 +179,27 @@ http://localhost:3000/Tasks	POST (pass data in body)
 http://localhost:3000/Tasks/1	PUT (pass data in body)
 
 
+---------------------------------------------------------------------
+
+Deploy to Heroku
+
+https://devcenter.heroku.com/articles/heroku-cli
+
+git init 
+
+heroku login
+
+heroku create <app name>
+
+git add .
+
+git commit -m "initial commit"
+
+git push heroku master
+
+
+
+
 
 
 
